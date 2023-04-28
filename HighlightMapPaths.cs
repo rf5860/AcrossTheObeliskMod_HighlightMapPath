@@ -39,7 +39,7 @@ namespace AtO_HighlightMapPaths
                     return;
                 }
                 visitedNodes.Add(start.name);
-                foreach (var n in start.nodeData.NodesConnected.Where(n => !_availableNodes.Contains(n.NodeId)))
+                foreach (var n in start.nodeData.NodesConnected.Where(n => _availableNodes.Contains(n.NodeId)))
                 {
                     if (!visitedNodes.Contains(n.NodeId))
                     {
