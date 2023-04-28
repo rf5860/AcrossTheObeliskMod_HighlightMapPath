@@ -78,18 +78,15 @@ namespace AtO_HighlightMapPaths
             [HarmonyPostfix]
             public static void DrawArrowsTemp(ref MapManager __instance, Node _nodeSource)
             {
-                var log = BepInEx.Logging.Logger.CreateLogSource("DrawArrowsTemp");
                 _mapNode = mapNode.GetValue(__instance) as Dictionary<string, Node>;
                 _roads = roads.GetValue(__instance) as Dictionary<string, Transform>;
                 _roadTemp = roadTemp.GetValue(__instance) as List<string>;
                 _availableNodes = availableNodes.GetValue(__instance) as List<string>;
                 var currentNode = _mapNode[AtOManager.Instance.currentMapNode];
                 var paths = GetPaths(currentNode, _nodeSource);
-                log.LogInfo("Paths: " + paths.Count);
                 for (int i1 = 0; i1 < paths.Count; i1++)
                 {
                     List<string> path = paths[i1];
-                    log.LogInfo(string.Format("Paths {0}: {1}", i1, String.Join(" → ", path.Select(p => _mapNode[p].nodeData.NodeName))));
                     Color color = Globals.Instance.MapArrowTemp;
                     ColorUtility.TryParseHtmlString(COLOR_CODES[i1 % COLOR_CODES.Length], out color);
                     for ( var i2 = 0; i2 < path.Count - 1; i2++)
