@@ -27,6 +27,9 @@ namespace AtO_HighlightMapPaths
         static List<string> _roadTemp;
         static FieldInfo availableNodes = typeof(MapManager).GetField(nameof(availableNodes), BindingFlags.NonPublic | BindingFlags.Instance);
         static List<string> _availableNodes;
+        static FieldInfo tmpRoads = typeof(MapManager).GetField(nameof(tmpRoads), BindingFlags.NonPublic | BindingFlags.Instance);
+        static Transform _tmpRoads;
+        static Dictionary<string, Transform> roadsToRemove;
 
         [HarmonyPatch(typeof(MapManager))]
         public class MapManager_Patch
@@ -41,7 +44,7 @@ namespace AtO_HighlightMapPaths
                 visitedNodes.Add(start.name);
                 foreach (var n in start.nodeData.NodesConnected.Where(n => _availableNodes.Contains(n.NodeId)))
                 {
-                    if (!visitedNodes.Contains(n.NodeId))
+                    if (!visitedNodes.Contains(n.NodeId) && MapManager.Instance.CanTravelToThisNode(_mapNode[n.NodeId], start))
                     {
                         pathList.Add(n.NodeId);
                         GetPaths(_mapNode[n.NodeId], end, visitedNodes, pathList, paths);
@@ -65,12 +68,14 @@ namespace AtO_HighlightMapPaths
                 string text = _nodeSource.nodeData.NodeId + "-" + _nodeDestination.nodeData.NodeId;
                 if (_roads.ContainsKey(text))
                 {
-                    Transform transform = _roads[text];
+                    Transform transform = Instantiate(_roads[text], _roads[text].parent).transform;
                     transform.gameObject.SetActive(value: true);
                     LineRenderer component = transform.GetComponent<LineRenderer>();
                     component.startColor = from;
                     component.endColor = to;
-                    _roadTemp.Add(text);
+                    string key = Guid.NewGuid().ToString();
+                    _roads[text + key] = transform;
+                    _roadTemp.Add(text + key);
                 }
             }
 
@@ -78,10 +83,14 @@ namespace AtO_HighlightMapPaths
             [HarmonyPostfix]
             public static void DrawArrowsTemp(ref MapManager __instance, Node _nodeSource)
             {
+                __instance.HideArrowsTemp(_nodeSource);
+                var log = BepInEx.Logging.Logger.CreateLogSource("DrawArrowsTemp");
                 _mapNode = mapNode.GetValue(__instance) as Dictionary<string, Node>;
                 _roads = roads.GetValue(__instance) as Dictionary<string, Transform>;
                 _roadTemp = roadTemp.GetValue(__instance) as List<string>;
                 _availableNodes = availableNodes.GetValue(__instance) as List<string>;
+                _tmpRoads = availableNodes.GetValue(__instance) as Transform;
+                
                 var currentNode = _mapNode[AtOManager.Instance.currentMapNode];
                 var paths = GetPaths(currentNode, _nodeSource);
                 for (int i1 = 0; i1 < paths.Count; i1++)
@@ -89,9 +98,12 @@ namespace AtO_HighlightMapPaths
                     List<string> path = paths[i1];
                     Color color = Globals.Instance.MapArrowTemp;
                     ColorUtility.TryParseHtmlString(COLOR_CODES[i1 % COLOR_CODES.Length], out color);
+                    log.LogInfo(string.Format("Paths ({0}) {1}: {2}", COLOR_CODES[i1 % COLOR_CODES.Length], i1, String.Join(" → ", path.Select(p => _mapNode[p].nodeData.NodeName + "[" + p  + "]"))));
                     for ( var i2 = 0; i2 < path.Count - 1; i2++)
                     {
-                        DrawArrow(_mapNode[path[i2]], _mapNode[path[i2+1]], color, color);
+                        Node nodeFrom = _mapNode[path[i2]];
+                        Node nodeTo = _mapNode[path[i2 + 1]];
+                        DrawArrow(nodeFrom, nodeTo, color, color);
                     }
                 }
             }
