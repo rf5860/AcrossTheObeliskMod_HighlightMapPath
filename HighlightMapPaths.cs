@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace AtO_HighlightMapPaths
 {
-    [BepInPlugin(PLUGIN_GUID, "Highlight Map Paths", "3.0.1")]
+    [BepInPlugin(PLUGIN_GUID, "Highlight Map Paths", "3.0.3")]
     public class HighlightMapPaths : BaseUnityPlugin
     {
         public const string PLUGIN_GUID = "com.rjf.ato.highlightmappaths";
